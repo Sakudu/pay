@@ -7,43 +7,52 @@ import com.wechat.pay.java.core.RSAAutoCertificateConfig;
 import com.wechat.pay.java.service.payments.jsapi.JsapiServiceExtension;
 import com.wechat.pay.java.service.payments.jsapi.model.Payer;
 import com.wechat.pay.java.service.payments.jsapi.model.PrepayWithRequestPaymentResponse;
+import com.wechat.pay.java.service.payments.model.Transaction;
 import com.wechat.pay.java.service.payments.nativepay.NativePayService;
 import com.wechat.pay.java.service.payments.nativepay.model.Amount;
 import com.wechat.pay.java.service.payments.nativepay.model.PrepayRequest;
 import com.wechat.pay.java.service.payments.nativepay.model.PrepayResponse;
+import com.wechat.pay.java.service.payments.nativepay.model.QueryOrderByOutTradeNoRequest;
 import com.wechat.pay.java.service.refund.RefundService;
 import com.wechat.pay.java.service.refund.model.AmountReq;
 import com.wechat.pay.java.service.refund.model.CreateRequest;
 import com.wechat.pay.java.service.refund.model.Refund;
 import com.wechat.pay.java.service.refund.model.Status;
+import lombok.extern.slf4j.Slf4j;
 import org.example.pay.common.PayChannel;
 import org.example.pay.common.PayCode;
 import org.example.pay.common.WxParam;
 import org.example.pay.service.PayService;
-import org.example.pay.vo.PayParam;
-import org.example.pay.vo.PayResult;
-import org.example.pay.vo.RefundParam;
-import org.example.pay.vo.RefundResult;
+import org.example.pay.vo.*;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 
 /**
  * @author gwd
  * @date 2023/11/2 16:26
  */
+@Slf4j
 @Service("wxPay")
 public class WxPayServiceImpl implements PayService {
 
     @Resource
     private RSAAutoCertificateConfig config;
 
+    private final NativePayService nativeService = new NativePayService.Builder().config(config).build();
+
+    private final JsapiServiceExtension jsApiService = new JsapiServiceExtension.Builder().config(config).build();
+
+    private final RefundService refundService = new RefundService.Builder().config(config).build();
+
     @Resource
     private WxParam wxParam;
 
     @Override
-    public PayResult<?> pay(PayParam payParam) {
+    public PayResult<String> pay(PayParam payParam) {
+        log.info("发起支付参数：{}", JSONUtil.toJsonStr(payParam));
         switch (payParam.getPayChannel()) {
             case PayChannel.PC:
                 return nativePay(payParam);
@@ -58,7 +67,7 @@ public class WxPayServiceImpl implements PayService {
             case PayChannel.H5:
                 return h5Pay(payParam);
             default:
-                PayResult<?> result = new PayResult<>();
+                PayResult<String> result = new PayResult<>();
                 result.fail(PayCode.BUSINESS_FAIL, "发起支付失败，请联系管理员");
                 return result;
         }
@@ -66,12 +75,9 @@ public class WxPayServiceImpl implements PayService {
 
     @Override
     public PayResult<RefundResult> refund(RefundParam refundParam) {
+        log.info("发起退款参数{}", JSONUtil.toJsonStr(refundParam));
         PayResult<RefundResult> result = new PayResult<>();
         try {
-            RefundService service = new RefundService
-                    .Builder()
-                    .config(config)
-                    .build();
             CreateRequest request = new CreateRequest();
             request.setTransactionId(refundParam.getOutTradeNo());
             request.setOutTradeNo(refundParam.getTransNum());
@@ -80,8 +86,10 @@ public class WxPayServiceImpl implements PayService {
             amount.setTotal(refundParam.getTotalFee().multiply(new BigDecimal("100")).longValue());
             amount.setRefund(refundParam.getRefundFee().multiply(new BigDecimal("100")).longValue());
             request.setAmount(amount);
-            Refund refund = service.create(request);
-            if (refund.getStatus().equals(Status.SUCCESS)){
+            log.info("调用微信退款参数{}", JSONUtil.toJsonStr(request));
+            Refund refund = refundService.create(request);
+            log.info("调用微信退款返回{}", JSONUtil.toJsonStr(refund));
+            if (refund.getStatus().equals(Status.SUCCESS)) {
                 RefundResult refundResult = new RefundResult();
                 refundResult.setOutRefundNo(refund.getRefundId());
                 refundResult.setRefundNo(refund.getOutRefundNo());
@@ -89,10 +97,41 @@ public class WxPayServiceImpl implements PayService {
                 refundResult.setTransNum(refund.getOutTradeNo());
                 refundResult.setRefundTime(DateUtil.parse(refund.getSuccessTime(), DatePattern.UTC_WITH_XXX_OFFSET_PATTERN));
                 result.success(refundResult);
-            } else if (refund.getStatus().equals(Status.PROCESSING)){
+            } else if (refund.getStatus().equals(Status.PROCESSING)) {
                 result.unknown(PayCode.UNKNOWN_STATUS, "退款中，请稍后");
-            } else{
+            } else {
                 result.fail(PayCode.BUSINESS_FAIL, "退款失败");
+            }
+        } catch (Exception e) {
+            result.error(PayCode.EXCEPTION_ERROR, e.getMessage(), e);
+        }
+        log.info("返回结果{}", JSONUtil.toJsonStr(result));
+        return result;
+    }
+
+    @Override
+    public PayResult<QueryResult> payQuery(QueryParam queryParam) {
+        PayResult<QueryResult> result = new PayResult<>();
+        QueryResult queryResult = new QueryResult();
+        try {
+            QueryOrderByOutTradeNoRequest query = new QueryOrderByOutTradeNoRequest();
+            query.setOutTradeNo(queryParam.getTransNum());
+            query.setMchid(wxParam.getMchId());
+            Transaction response = nativeService.queryOrderByOutTradeNo(query);
+            queryResult.setStatus(response.getTradeState().name());
+            if (Transaction.TradeStateEnum.SUCCESS.equals(response.getTradeState())) {
+                queryResult.setSuccessTime(DateUtil.parse(response.getSuccessTime(), DatePattern.UTC_WITH_XXX_OFFSET_PATTERN));
+                queryResult.setTransNum(response.getOutTradeNo());
+                queryResult.setOutTradeNum(response.getTransactionId());
+                queryResult.setTradeType(response.getTradeType().name());
+                queryResult.setExtraData(JSONUtil.toBean(response.getAttach(), PayExtraData.class));
+                queryResult.setTotalFee(new BigDecimal(response.getAmount().getTotal()).divide(new BigDecimal(100), 2, RoundingMode.HALF_UP));
+                result.success(queryResult);
+            } else if (Transaction.TradeStateEnum.USERPAYING.equals(response.getTradeState())) {
+                result.unknown(PayCode.UNKNOWN_STATUS, "用户支付中");
+            } else {
+                result.setResult(queryResult);
+                result.fail(PayCode.BUSINESS_FAIL, response.getTradeStateDesc());
             }
         } catch (Exception e) {
             result.error(PayCode.EXCEPTION_ERROR, e.getMessage(), e);
@@ -100,30 +139,26 @@ public class WxPayServiceImpl implements PayService {
         return result;
     }
 
-    private PayResult<?> h5Pay(PayParam payParam) {
+    private PayResult<String> h5Pay(PayParam payParam) {
         return null;
     }
 
-    private PayResult<?> appPay(PayParam payParam) {
+    private PayResult<String> appPay(PayParam payParam) {
         return null;
     }
 
-    private PayResult<?> miniPay(PayParam payParam) {
+    private PayResult<String> miniPay(PayParam payParam) {
         return null;
     }
 
-    private PayResult<?> scenePay(PayParam payParam) {
+    private PayResult<String> scenePay(PayParam payParam) {
         PayResult<String> result = new PayResult<>();
         return null;
     }
 
-    private PayResult<?> jsApiPay(PayParam payParam) {
+    private PayResult<String> jsApiPay(PayParam payParam) {
         PayResult<String> result = new PayResult<>();
         try {
-            JsapiServiceExtension service = new JsapiServiceExtension
-                    .Builder()
-                    .config(config)
-                    .build();
             com.wechat.pay.java.service.payments.jsapi.model.PrepayRequest request = new com.wechat.pay.java.service.payments.jsapi.model.PrepayRequest();
             request.setAppid(wxParam.getAppId());
             request.setMchid(wxParam.getMchId());
@@ -138,7 +173,9 @@ public class WxPayServiceImpl implements PayService {
             Payer payer = new Payer();
             payer.setOpenid(payParam.getWxOpenId());
             request.setPayer(payer);
-            PrepayWithRequestPaymentResponse response = service.prepayWithRequestPayment(request);
+            log.info("调用jsapi支付参数{}", JSONUtil.toJsonStr(request));
+            PrepayWithRequestPaymentResponse response = jsApiService.prepayWithRequestPayment(request);
+            log.info("调用jsapi支付返回{}", JSONUtil.toJsonStr(response));
             result.success(JSONUtil.toJsonStr(response));
         } catch (Exception e) {
             result.error(PayCode.EXCEPTION_ERROR, e.getMessage(), e);
@@ -146,13 +183,9 @@ public class WxPayServiceImpl implements PayService {
         return result;
     }
 
-    private PayResult<?> nativePay(PayParam payParam) {
+    private PayResult<String> nativePay(PayParam payParam) {
         PayResult<String> result = new PayResult<>();
         try {
-            NativePayService service = new NativePayService
-                    .Builder()
-                    .config(config)
-                    .build();
             PrepayRequest request = new PrepayRequest();
             request.setAppid(wxParam.getAppId());
             request.setMchid(wxParam.getMchId());
@@ -164,7 +197,9 @@ public class WxPayServiceImpl implements PayService {
             Amount amount = new Amount();
             amount.setTotal(payParam.getTotalFee().multiply(new BigDecimal("100")).intValue());
             request.setAmount(amount);
-            PrepayResponse response = service.prepay(request);
+            log.info("调用native支付参数{}", JSONUtil.toJsonStr(request));
+            PrepayResponse response = nativeService.prepay(request);
+            log.info("调用native支付返回{}", JSONUtil.toJsonStr(response));
             String codeUrl = response.getCodeUrl();
             result.success(codeUrl);
         } catch (Exception e) {

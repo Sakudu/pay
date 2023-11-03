@@ -1,9 +1,6 @@
 package org.example.pay.service;
 
-import org.example.pay.vo.PayParam;
-import org.example.pay.vo.PayResult;
-import org.example.pay.vo.RefundParam;
-import org.example.pay.vo.RefundResult;
+import org.example.pay.vo.*;
 
 /**
  * @author gwd
@@ -11,7 +8,9 @@ import org.example.pay.vo.RefundResult;
  */
 public interface PayService {
 
-    PayResult<?> pay(PayParam payParam);
+    PayResult<String> pay(PayParam payParam);
 
     PayResult<RefundResult> refund(RefundParam refundParam);
+
+    PayResult<QueryResult> payQuery(QueryParam queryParam);
 }
