@@ -9,7 +9,7 @@ import org.springframework.context.annotation.Lazy;
 import javax.annotation.Resource;
 
 /**
- * @author gaowende
+ * @author gwd
  * @date 2023/11/3 8:52
  */
 @Configuration

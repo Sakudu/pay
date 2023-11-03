@@ -5,7 +5,7 @@ import lombok.Data;
 import java.math.BigDecimal;
 
 /**
- * @author gaowende
+ * @author gwd
  * @date 2023/11/3 13:21
  */
 @Data

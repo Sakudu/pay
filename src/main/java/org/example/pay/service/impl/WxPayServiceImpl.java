@@ -30,7 +30,7 @@ import javax.annotation.Resource;
 import java.math.BigDecimal;
 
 /**
- * @author gaowende
+ * @author gwd
  * @date 2023/11/2 16:26
  */
 @Service("wxPay")

@@ -6,7 +6,7 @@ import org.example.pay.vo.RefundParam;
 import org.example.pay.vo.RefundResult;
 
 /**
- * @author gaowende
+ * @author gwd
  * @date 2023/11/2 16:25
  */
 public interface PayService {

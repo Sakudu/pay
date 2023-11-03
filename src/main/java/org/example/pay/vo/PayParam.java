@@ -8,7 +8,7 @@ import java.math.BigDecimal;
 import java.util.Date;
 
 /**
- * @author gaowende
+ * @author gwd
  * @date 2023/11/2 16:26
  */
 @Data

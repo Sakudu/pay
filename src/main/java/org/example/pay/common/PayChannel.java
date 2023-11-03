@@ -1,7 +1,7 @@
 package org.example.pay.common;
 
 /**
- * @author gaowende
+ * @author gwd
  * @date 2023/11/3 10:04
  */
 public interface PayChannel {

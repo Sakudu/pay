@@ -2,11 +2,10 @@ package org.example.pay.vo;
 
 import lombok.Data;
 
-import java.math.BigDecimal;
 import java.util.Date;
 
 /**
- * @author gaowende
+ * @author gwd
  * @date 2023/11/3 13:42
  */
 @Data
