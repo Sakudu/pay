@@ -13,10 +13,10 @@
         <maven.compiler.target>8</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <spring-boot-version>2.7.6</spring-boot-version>
+        <aliPay-sdk>4.38.111.ALL</aliPay-sdk>
         <hutool-all>5.8.18</hutool-all>
         <httpclient>5.2.1</httpclient>
         <wechatpay>0.2.12</wechatpay>
-
         <lombok>1.18.28</lombok>
     </properties>
 
@@ -32,6 +32,12 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-configuration-processor</artifactId>
             <version>${spring-boot-version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.alipay.sdk</groupId>
+            <artifactId>alipay-sdk-java</artifactId>
+            <version>${aliPay-sdk}</version>
         </dependency>
 
         <dependency>

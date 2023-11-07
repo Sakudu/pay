@@ -6,5 +6,7 @@ package org.example.pay.common;
  */
 public interface PayType {
 
-    Integer wx = 0;
+    Integer WX = 0;
+
+    Integer ALI = 1;
 }

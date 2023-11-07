@@ -130,7 +130,6 @@ public class WxPayServiceImpl implements PayService {
             } else if (Transaction.TradeStateEnum.USERPAYING.equals(response.getTradeState())) {
                 result.unknown(PayCode.UNKNOWN_STATUS, "用户支付中");
             } else {
-                result.setResult(queryResult);
                 result.fail(PayCode.BUSINESS_FAIL, response.getTradeStateDesc());
             }
         } catch (Exception e) {

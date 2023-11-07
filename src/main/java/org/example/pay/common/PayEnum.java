@@ -7,7 +7,9 @@ package org.example.pay.common;
 
 public enum PayEnum {
 
-    WX_PAY(0, "wxPay");
+    WX_PAY(PayType.WX, "wxPay"),
+
+    ALI_PAY(PayType.ALI,"aliPay");
 
     private final Integer payType;
 

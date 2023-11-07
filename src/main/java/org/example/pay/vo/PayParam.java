@@ -32,4 +32,8 @@ public class PayParam {
 
     private String description;
 
+    private String title;
+
+    private String authCode;
+
 }

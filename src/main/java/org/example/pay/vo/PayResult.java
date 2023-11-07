@@ -1,7 +1,7 @@
 package org.example.pay.vo;
 
 import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -9,8 +9,8 @@ import lombok.extern.slf4j.Slf4j;
  * @author gwd
  * @date 2023/11/2 16:26
  */
-@Data
 @Slf4j
+@Getter
 @AllArgsConstructor
 @NoArgsConstructor
 public class PayResult<T> {
