@@ -9,5 +9,7 @@ import java.util.Map;
 public interface VerifySignService {
 
     /** 验签 true代表验签通过 false代表验签失败 */
-    Boolean verifySign(Map<String, String> map);
+    default Boolean verifySign(Map<String, String> map){
+        return Boolean.TRUE;
+    }
 }
