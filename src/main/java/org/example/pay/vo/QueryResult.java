@@ -25,4 +25,10 @@ public class QueryResult {
     private PayExtraData extraData;
 
     private BigDecimal totalFee;
+
+    private String refundNo;
+
+    private String outRefundNo;
+
+    private BigDecimal refundFee;
 }

@@ -27,6 +27,8 @@ import org.example.pay.vo.*;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 
@@ -136,6 +138,16 @@ public class WxPayServiceImpl implements PayService {
             result.error(PayCode.EXCEPTION_ERROR, e.getMessage(), e);
         }
         return result;
+    }
+
+    @Override
+    public PayResult<QueryResult> refundQuery(QueryParam param) {
+        return null;
+    }
+
+    @Override
+    public PayResult<ResultNotify> notify(HttpServletRequest request, HttpServletResponse response) {
+        return null;
     }
 
     private PayResult<String> h5Pay(PayParam payParam) {

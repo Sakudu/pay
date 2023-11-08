@@ -10,4 +10,6 @@ import lombok.Data;
 public class QueryParam {
 
     private String transNum;
+
+    private String refundNo;
 }
