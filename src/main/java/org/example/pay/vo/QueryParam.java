@@ -9,7 +9,9 @@ import lombok.Data;
 @Data
 public class QueryParam {
 
+    /** 交易号 */
     private String transNum;
 
+    /** 退款单号 */
     private String refundNo;
 }

@@ -36,4 +36,6 @@ public class PayParam {
 
     private String authCode;
 
+    private Integer queryCount = 0;
+
 }

@@ -142,6 +142,7 @@ public class WxPayServiceImpl implements PayService {
 
     @Override
     public PayResult<QueryResult> refundQuery(QueryParam param) {
+        PayResult<QueryResult> result = new PayResult<>();
         return null;
     }
 
@@ -184,9 +185,9 @@ public class WxPayServiceImpl implements PayService {
             Payer payer = new Payer();
             payer.setOpenid(payParam.getWxOpenId());
             request.setPayer(payer);
-            log.info("调用jsapi支付参数{}", JSONUtil.toJsonStr(request));
+            log.info("调用微信jsapi支付参数{}", JSONUtil.toJsonStr(request));
             PrepayWithRequestPaymentResponse response = jsApiService.prepayWithRequestPayment(request);
-            log.info("调用jsapi支付返回{}", JSONUtil.toJsonStr(response));
+            log.info("调用微信jsapi支付返回{}", JSONUtil.toJsonStr(response));
             result.success(JSONUtil.toJsonStr(response));
         } catch (Exception e) {
             result.error(PayCode.EXCEPTION_ERROR, e.getMessage(), e);
@@ -208,9 +209,9 @@ public class WxPayServiceImpl implements PayService {
             Amount amount = new Amount();
             amount.setTotal(payParam.getTotalFee().multiply(new BigDecimal("100")).intValue());
             request.setAmount(amount);
-            log.info("调用native支付参数{}", JSONUtil.toJsonStr(request));
+            log.info("调用微信native支付参数{}", JSONUtil.toJsonStr(request));
             PrepayResponse response = nativeService.prepay(request);
-            log.info("调用native支付返回{}", JSONUtil.toJsonStr(response));
+            log.info("调用微信native支付返回{}", JSONUtil.toJsonStr(response));
             String codeUrl = response.getCodeUrl();
             result.success(codeUrl);
         } catch (Exception e) {
