@@ -6,6 +6,7 @@ import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -32,5 +33,24 @@ public class RedisUtil {
         if (!StrUtil.isEmpty(currentValue) && currentValue.equals(value)) {
             redisTemplate.opsForValue().getOperations().delete(key);
         }
+    }
+
+    public boolean zSetIsEmpty(String key) {
+        Long size = redisTemplate.opsForZSet().zCard(key);
+        return size == null || size <= 0L;
+    }
+
+    public String getZSetValue(String key) {
+        Set<String> range = redisTemplate.opsForZSet().range(key, 0, 0);
+        if (range != null && !range.isEmpty()) {
+            String next = range.iterator().next();
+            deleteZSetValue(key, next);
+            return next;
+        }
+        return null;
+    }
+
+    public void deleteZSetValue(String key, String value){
+        redisTemplate.opsForZSet().remove(key, value);
     }
 }

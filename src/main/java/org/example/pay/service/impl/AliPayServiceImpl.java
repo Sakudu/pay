@@ -164,7 +164,7 @@ public class AliPayServiceImpl implements PayService {
                             resultNotify.setTransNum(queryResult.getResult().getTransNum());
                             resultNotify.setOutTradeNo(queryResult.getResult().getOutTradeNum());
                             resultNotify.setPayTime(queryResult.getResult().getSuccessTime());
-                            resultNotify.setPayAmount(payParam.totalFee);
+                            resultNotify.setPayAmount(payParam.getTotalFee());
                             resultNotify.setExtraData(payParam.getExtraData());
                             result.success(JSON.toJSONString(resultNotify));
                             break;
