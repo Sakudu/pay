@@ -54,7 +54,7 @@ public class AfterPayServiceImpl implements AfterPayService {
 
     private void payQueryAsync() {
         boolean flag;
-        for (int i = 0; i < 99; i++) {
+        for (int i = 0; i < 100; i++) {
             flag = redisUtil.zSetIsEmpty(Constants.ASYNC_SEARCH);
             if (flag) {
                 break;

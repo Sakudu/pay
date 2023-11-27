@@ -59,6 +59,8 @@ public class AliPayServiceImpl implements PayService {
 
     private static final String ALI_SCENE_PAY_CODE = "bar_code";
 
+    private static final String ALI_APP_PAY_CODE = "QUICK_MSECURITY_PAY";
+
     private static final String ALI_PC_PAY_CODE = "FAST_INSTANT_TRADE_PAY";
 
     private static final String CALL_BACK_SUCCESS = "success";
@@ -79,10 +81,12 @@ public class AliPayServiceImpl implements PayService {
                 return h5Pay(payParam);
             case PayChannel.SCENE:
                 return scenePay(payParam);
-            case PayChannel.APP:
-                return miniPay(payParam);
             case PayChannel.MINI:
+                return miniPay(payParam);
+            case PayChannel.JSAPI:
                 return jsApiPay();
+            case PayChannel.APP:
+                return appPay(payParam);
             default:
                 PayResult<String> result = new PayResult<>();
                 result.fail(PayCode.BUSINESS_FAIL, "发起支付失败，请联系管理员");
@@ -185,6 +189,32 @@ public class AliPayServiceImpl implements PayService {
         } catch (AlipayApiException e) {
             result.error(PayCode.EXCEPTION_ERROR, e.getErrMsg(), e);
         } catch (InterruptedException e) {
+            result.error(PayCode.EXCEPTION_ERROR, e.getMessage(), e);
+        }
+        return result;
+    }
+
+    private PayResult<String> appPay(PayParam payParam) {
+        PayResult<String> result = new PayResult<>();
+        AlipayTradeAppPayRequest request = new AlipayTradeAppPayRequest();
+        request.setNotifyUrl(aliParam.getNotifyUrl());
+        AlipayTradeAppPayModel model = new AlipayTradeAppPayModel();
+        model.setOutTradeNo(payParam.getTransNum());
+        model.setTotalAmount(payParam.getTotalFee().toString());
+        model.setSubject(payParam.getTitle());
+        model.setBody(JSON.toJSONString(payParam.getExtraData()));
+        request.setBizModel(model);
+        model.setTimeoutExpress(DateUtil.format(payParam.getTimeExpire(), DatePattern.NORM_DATETIME_PATTERN));
+        try {
+            log.info("支付宝调用APP支付参数：{}", JSON.toJSONString(request));
+            AlipayTradeAppPayResponse response = client.sdkExecute(request);
+            log.info("支付宝调用APP支付返回：{}", JSON.toJSONString(response));
+            if (response.isSuccess()) {
+                result.success(response.getBody());
+            } else {
+                result.fail(PayCode.BUSINESS_FAIL, response.getSubMsg());
+            }
+        } catch (AlipayApiException e) {
             result.error(PayCode.EXCEPTION_ERROR, e.getMessage(), e);
         }
         return result;
