@@ -24,9 +24,7 @@ import org.example.pay.common.PayCode;
 import org.example.pay.common.WxParam;
 import org.example.pay.service.PayService;
 import org.example.pay.vo.*;
-import org.springframework.stereotype.Service;
 
-import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.math.BigDecimal;
@@ -37,20 +35,25 @@ import java.math.RoundingMode;
  * @date 2023/11/2 16:26
  */
 @Slf4j
-@Service("wxPay")
+//@Service("wxPay")
 public class WxPayServiceImpl implements PayService {
 
-    @Resource
-    private RSAAutoCertificateConfig config;
+    private final NativePayService nativeService;
 
-    private final NativePayService nativeService = new NativePayService.Builder().config(config).build();
+    private final JsapiServiceExtension jsApiService;
 
-    private final JsapiServiceExtension jsApiService = new JsapiServiceExtension.Builder().config(config).build();
+    private final RefundService refundService;
 
-    private final RefundService refundService = new RefundService.Builder().config(config).build();
+    private final WxParam wxParam;
 
-    @Resource
-    private WxParam wxParam;
+    //@Autowired
+    public WxPayServiceImpl(RSAAutoCertificateConfig config, WxParam wxParam) {
+        this.nativeService = new NativePayService.Builder().config(config).build();
+        this.jsApiService = new JsapiServiceExtension.Builder().config(config).build();
+        this.refundService = new RefundService.Builder().config(config).build();
+        this.wxParam = wxParam;
+    }
+
 
     @Override
     public PayResult<String> pay(PayParam payParam) {
